@@ -24,16 +24,22 @@ BFCodec::BFCodec(const std::vector<uint8_t> iv, const std::vector<uint8_t> key)
 
 bool BFCodec::decipher(std::vector<uint8_t>& data)
 {
-	size_t dataSize = data.size();
-	size_t inputPayloadSize = dataSize - 8;
+	size_t inputDataSize = data.size();
+	size_t inputPayloadSize = inputDataSize - 8;
 
-	if (dataSize >= 8)
+	if (inputDataSize < 8)
 	{
+		return false;
+	}
+
 		uint32_t decryptedPayloadSize = (data[inputPayloadSize + 0] << 24) | (data[inputPayloadSize + 1] << 16) | (data[inputPayloadSize + 2] << 8) | data[inputPayloadSize + 3];
 		uint32_t encryptedPayloadSize = (data[inputPayloadSize + 4] << 24) | (data[inputPayloadSize + 5] << 16) | (data[inputPayloadSize + 6] << 8) | data[inputPayloadSize + 7];
 
-		if (encryptedPayloadSize == inputPayloadSize && inputPayloadSize == ((decryptedPayloadSize + 7) & 0xFFFFFFF8))
+	if (inputPayloadSize != encryptedPayloadSize || inputPayloadSize != ((decryptedPayloadSize + 7) / 8) * 8)
 		{
+		return false;
+	}
+
 			uint32_t ivLeft = (iv[0] << 24) | (iv[1] << 16) | (iv[2] << 8) | iv[3];
 			uint32_t ivRight = (iv[4] << 24) | (iv[5] << 16) | (iv[6] << 8) | iv[7];
 
@@ -50,14 +56,12 @@ bool BFCodec::decipher(std::vector<uint8_t>& data)
 				left ^= ivLeft;
 				right ^= ivRight;
 
-				data[i + 0] = (uint8_t)((left >> 24) & 0xFF);
-				data[i + 1] = (uint8_t)((left >> 16) & 0xFF);
-				data[i + 2] = (uint8_t)((left >> 8) & 0xFF);
-				data[i + 3] = (uint8_t)((left >> 0) & 0xFF);
-				data[i + 4] = (uint8_t)((right >> 24) & 0xFF);
-				data[i + 5] = (uint8_t)((right >> 16) & 0xFF);
-				data[i + 6] = (uint8_t)((right >> 8) & 0xFF);
-				data[i + 7] = (uint8_t)((right >> 0) & 0xFF);
+		for (int j = 0; j < 4; ++j)
+		{
+			uint8_t shift = 24 - 8 * j;
+			data[i + j] = static_cast<uint8_t>((left >> shift) & 0xFF);
+			data[i + j + 4] = static_cast<uint8_t>((right >> shift) & 0xFF);
+		}
 
 				ivLeft = leftData;
 				ivRight = rightData;
@@ -131,9 +135,9 @@ void BFCodec::setKey(const uint8_t* key, size_t keySize)
 	for (int i = 0, j = 0; i < 18; i++)
 	{
 		p[i] = (
-			((uint32_t)key[(j + 0) % keySize] << 24) |
-			((uint32_t)key[(j + 1) % keySize] << 16) |
-			((uint32_t)key[(j + 2) % keySize] << 8) |
+			static_cast<uint32_t>(key[(j + 0) % keySize] << 24) |
+			static_cast<uint32_t>(key[(j + 1) % keySize] << 16) |
+			static_cast<uint32_t>(key[(j + 2) % keySize] << 8) |
 			key[(j + 3) % keySize]
 			) ^ initialPArray[i];
 		j = (j + 4) % keySize;
