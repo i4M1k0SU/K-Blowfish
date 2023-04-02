@@ -8,13 +8,13 @@ Reimplemented in C++.
 
 ### Decrypt
 
-```ps
+```cmd
  K-Blowfish.exe --iv <IV Hex> --key <Key Hex> INPUT_FILE OUTPUT_FILE
 ```
 
 ### Encrypt
 
-```ps
+```cmd
  K-Blowfish.exe --iv <IV Hex> --key <Key Hex> --encrypt INPUT_FILE OUTPUT_FILE
 ```
 
