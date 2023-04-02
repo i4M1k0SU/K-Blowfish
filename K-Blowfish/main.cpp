@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 
 	if (inputFilePath.empty() || outputFilePath.empty() || ivHex.empty() || keyHex.empty() || !isHexString(ivHex) || !isHexString(keyHex))
 	{
-		std::cerr << "Invalid arguments.\nUsage: " << argv[0] << " --iv <IV Hex> --key <Key Hex> INPUT_FILE OUTPUT_FILE" << std::endl;
+		std::cerr << "Invalid arguments.\nUsage: " << argv[0] << " --iv <IV Hex> --key <Key Hex> [-e | --encrypt] INPUT_FILE OUTPUT_FILE" << std::endl;
 		return 1;
 	}
 
