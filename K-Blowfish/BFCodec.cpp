@@ -71,14 +71,69 @@ bool BFCodec::decipher(std::vector<uint8_t>& data)
 
 			return true;
 		}
-	}
-
-	return false;
-}
 
 bool BFCodec::encipher(std::vector<uint8_t>& data)
 {
-	// @todo implement
+	size_t inputDataSize = data.size();
+
+	if (inputDataSize <= 0)
+	{
+	return false;
+}
+
+	size_t encryptedPayloadSize = ((inputDataSize + 7) / 8) * 8;
+	data.resize(encryptedPayloadSize + 8);
+
+	uint32_t ivLeft = (iv[0] << 24) | (iv[1] << 16) | (iv[2] << 8) | iv[3];
+	uint32_t ivRight = (iv[4] << 24) | (iv[5] << 16) | (iv[6] << 8) | iv[7];
+
+	for (size_t i = 0; i < encryptedPayloadSize; i += 8)
+{
+		uint32_t leftData = 0;
+		uint32_t rightData = 0;
+
+		for (int j = 0; j < 4; j++)
+		{
+			uint8_t shift = 24 - 8 * j;
+			if (i + j < inputDataSize)
+			{
+				leftData |= (data[i + j] << shift);
+			}
+			if (i + j + 4 < inputDataSize)
+			{
+				rightData |= (data[i + j + 4] << shift);
+			}
+		}
+
+		leftData ^= ivLeft;
+		rightData ^= ivRight;
+
+		blockEncipher(&leftData, &rightData);
+
+		for (int j = 0; j < 4; j++)
+		{
+			uint8_t shift = 24 - 8 * j;
+			if (i + j < inputDataSize)
+			{
+				data[i + j] = static_cast<uint8_t>((leftData >> shift) & 0xff);
+			}
+			if (i + j + 4 < inputDataSize)
+			{
+				data[i + j + 4] = static_cast<uint8_t>((rightData >> shift) & 0xff);
+			}
+		}
+
+		ivLeft = leftData;
+		ivRight = rightData;
+	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		uint8_t shift = 24 - 8 * i;
+		data[encryptedPayloadSize + i] = static_cast<uint8_t>((inputDataSize >> shift) & 0xff);
+		data[encryptedPayloadSize + i + 4] = static_cast<uint8_t>((encryptedPayloadSize >> shift) & 0xff);
+	}
+
 	return true;
 }
 
@@ -122,8 +177,8 @@ void BFCodec::blockEncipher(uint32_t* left, uint32_t* right)
 		tempRight = temp;
 	}
 
-	*left = tempRight ^ p[16];
-	*right = tempLeft ^ p[17];
+	*left = tempRight ^ p[17];
+	*right = tempLeft ^ p[16];
 }
 
 void BFCodec::setKey(const uint8_t* key, size_t keySize)

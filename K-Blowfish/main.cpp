@@ -37,10 +37,10 @@ int main(int argc, char* argv[])
 		{
 			keyHex = argv[++i];
 		}
-		//else if (arg == "-e" || arg == "--encrypt" || arg == "--encryption" || arg == "--encipher" || arg == "--enc")
-		//{
-		//	isEncryptionMode = true;
-		//}
+		else if (arg == "-e" || arg == "--encrypt" || arg == "--encryption" || arg == "--encipher" || arg == "--enc")
+		{
+			isEncryptionMode = true;
+		}
 	}
 
 	if (argc >= 6)
